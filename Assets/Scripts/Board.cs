@@ -19,7 +19,7 @@ public class Board : MonoBehaviour {
     public GameObject[] dots;
     private TileBackground[,] tiles;
     public GameObject[,] allDots;
-    // Start is called before the first frame update
+    // Start is called before the first frame update  
     void Start()
     {
         //Create a 2D array of tiles with given w/h
