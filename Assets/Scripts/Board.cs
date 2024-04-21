@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.UI;
 
+
+// I currently don't want to have concurrent matches. So this state keeps track of it.
 public enum GameState {
     wait,
     move
@@ -11,20 +13,19 @@ public enum GameState {
 public class Board : MonoBehaviour {
 
     public GameState gameState = GameState.move;
-
+    public MatchSearcher matchSearcher;
     public int width;
     public int height;
     public int offset;
     public GameObject tilePrefab;
     public GameObject[] dots;
-    private TileBackground[,] tiles;
     public GameObject[,] allDots;
-    // Start is called before the first frame update  
+
     void Start()
     {
         //Create a 2D array of tiles with given w/h
-        tiles = new TileBackground[width, height];
         allDots = new GameObject[width, height];
+        matchSearcher = FindObjectOfType<MatchSearcher>();
         SetBoard();
     }
 
@@ -32,8 +33,8 @@ public class Board : MonoBehaviour {
     {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                Vector2 bgPos = new Vector2(i, j);
-                Vector2 dotPos = new Vector2(i, j + offset);
+                Vector2 bgPos = new(i, j);
+                Vector2 dotPos = new(i, j + offset);
                 GameObject backgroundTile = Instantiate(tilePrefab, bgPos, Quaternion.identity) as GameObject;
                 backgroundTile.transform.parent = this.transform;
                 backgroundTile.name = "(" + i + "," + j + ")";
@@ -78,6 +79,8 @@ public class Board : MonoBehaviour {
     private void DestroyMatchesAt(int col, int row)
     {
         if (allDots[col, row].GetComponent<Dot>().isMatched) {
+            //Remove the destroyed dot from the list.
+            matchSearcher.currentMatches.Remove(allDots[col, row]);
             Destroy(allDots[col, row]);
             allDots[col, row] = null;
         }

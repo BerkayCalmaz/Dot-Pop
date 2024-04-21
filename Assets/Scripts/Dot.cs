@@ -11,8 +11,8 @@ public class Dot : MonoBehaviour
     public int col;
     public int prevRow;
     public int prevCol;
-    public int targetX;
-    public int targetY;
+    public MatchSearcher matchSearcher;
+
     private GameObject otherDot;
     private Board board;
     private Vector2 tmpPos;
@@ -25,36 +25,30 @@ public class Dot : MonoBehaviour
     void Start()
     {
         board = FindObjectOfType<Board>();
-        //targetX = (int) transform.position.x;
-        //targetY = (int)transform.position.y;
-  /*        row = (int)transform.position.y;
-        col = (int)transform.position.x;
-        prevRow = row;
-        prevCol = col;
-  */
-        }
+        matchSearcher = FindObjectOfType<MatchSearcher>();
+    }
 
     // Update is called once per frame
     void Update()
     {
-        FindMatches();
         if (isMatched) {
+            //Change the color of the sprite when matched
             SpriteRenderer selfSprite = GetComponent<SpriteRenderer>();
             selfSprite.color = new Color(1f, 1f, 1f, 0.1f);
         }
-        
-        //targetX = col;
-        //targetY = row;
-        
-        //TODO: currently targets are useless, if they dont have a further purpose, they can be deleted.
+
         //TODO Idea: we can make the targets shine before we leave the mouse? 
+        //TODO: this part should be split into appropriate functions
+        
         if (Mathf.Abs(row - transform.position.y) > .1) {
-            //Start movement
+            //Start movement towards target
             tmpPos = new Vector2(transform.position.x, row);
             transform.position = Vector2.Lerp(transform.position, tmpPos, 0.6f);
             if (board.allDots[col, row] != this.gameObject) {
                 board.allDots[col, row] = this.gameObject;
             }
+            //Start match search
+            matchSearcher.FindAllMatches();
         }
         else {
             //End movement
@@ -63,12 +57,14 @@ public class Dot : MonoBehaviour
         }
 
         if (Mathf.Abs(col - transform.position.x) > .1) {
-            //Start movement
+            //Start horizontal movement
             tmpPos = new Vector2(col, transform.position.y);
             transform.position = Vector2.Lerp(transform.position, tmpPos, 0.6f);
             if (board.allDots[col, row] != this.gameObject) {
                 board.allDots[col, row] = this.gameObject;
             }
+            matchSearcher.FindAllMatches();
+
         }
         else {
             //End movement
@@ -102,7 +98,7 @@ public class Dot : MonoBehaviour
         }
         board.gameState = GameState.wait;
         SwapPieces();
-        //Sometimes there are impossible matches and we 
+        //Sometimes there are impossible matches and we check it in the coroutine.
         StartCoroutine(CheckMoveCo());
     }
 
@@ -173,47 +169,8 @@ public class Dot : MonoBehaviour
             otherDot.GetComponent<Dot>().row += 1;
             prevCol = col;
             prevRow = row;
-
             row -= 1;
         }
     }
 
-    void FindMatches()
-    {
-        CheckHorizontalMatches();
-        CheckVerticalMatches();
-    }
-    private void CheckHorizontalMatches()
-    {
-        if (col > 0 && col < board.width - 1) {
-            GameObject leftDot1 = board.allDots[col - 1, row];
-            GameObject rightDot1 = board.allDots[col + 1, row];
-            if (!leftDot1 || !rightDot1) {
-                return;
-            }
-            if (this.gameObject.CompareTag(leftDot1.tag) && this.gameObject.CompareTag(rightDot1.tag)) {
-                leftDot1.GetComponent<Dot>().isMatched = true;
-
-                rightDot1.GetComponent<Dot>().isMatched = true;
-                isMatched = true;
-            }
-        }
-    }
-
-    private void CheckVerticalMatches()
-    {
-        if (row > 0 && row < board.height - 1) {
-            GameObject upDot1 = board.allDots[col, row + 1];
-            GameObject downDot1 = board.allDots[col, row - 1];
-            if (!upDot1 || !downDot1) {
-                return;
-            }
-            if (this.gameObject.CompareTag(upDot1.tag) && this.gameObject.CompareTag(downDot1.tag)) {
-                upDot1.GetComponent<Dot>().isMatched = true;
-                downDot1.GetComponent<Dot>().isMatched = true;
-
-                isMatched = true;
-            }
-        }
-    }
 }
